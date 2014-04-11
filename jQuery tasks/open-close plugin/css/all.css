@@ -33,7 +33,7 @@ p {margin:0 0 20px;}
 	margin:0 0 20px;
 	padding:10px;
 }
-.open-close .open-close {margin:0;}
+.open-close .open-close {margin:10px 0 0;}
 .open-close .slide {
 	position:relative;
 	overflow:hidden;
