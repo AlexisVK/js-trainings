@@ -6,59 +6,88 @@ jQuery(function(){
 // inin open close
 function initOpenClosePlugin() {
 	jQuery('.open-close').openClose({
-		'animSpeed': 500,
-		'activeClass': 'active',
-		'slide': '.slide'
+		'slideSpeed': 300
 	});
 }
 
 /*
 * Open close plugin
 */
-;(function( $ ){ 
-	$.fn.openClose = function( options ) {
-		var settings = $.extend({
-			'animSpeed': 400,
-			'activeClass': 'active',
-			'opener': '.opener',
-			'slide': '.slide'
+;(function($){
+	function OpenClose(options) {
+		this.options = $.extend({
+			opener: '.opener',
+			slide: '.slide',
+			activeClass: 'active',
+			slideSpeed: 500,
+			animated: false
 		}, options);
+		this.init();
+	}
 
-		return this.each(function(e) {
-			var holder = $(this);
-			var opener = holder.find(settings.opener).eq(0);
-			var slide = holder.find(settings.slide).eq(0);
-			var animated = false;
-
-			initialState();
-			opener.on('click', clickHandler);
-
-			function initialState() {
-				if ( holder.hasClass(settings.activeClass) ) {
-					slide.slideDown(0);
-				} else {
-					slide.slideUp(0);
-				}
+	OpenClose.prototype = {
+		init: function() {
+			if(this.options.holder) {
+				this.findElements();
+				this.attachEvents();
+				this.initialState();
 			}
-
-			function clickHandler(e) {
+		},
+		findElements: function() {
+			this.holder = $(this.options.holder);
+			this.opener = this.holder.find(this.options.opener).eq(0);
+			this.slide = this.holder.find(this.options.slide).eq(0);
+		},
+		attachEvents: function() {
+			var self = this;
+			this.clickHandler = function(e) {
 				e.preventDefault();
-				if ( !animated ) {
-					if ( holder.hasClass(settings.activeClass) ) {
-						animated = true;
-						slide.slideUp(settings.animSpeed, function() {
-							holder.removeClass(settings.activeClass);
-							animated = false;
-						});
+				if (!self.options.animated) {
+					if(!self.holder.hasClass(self.options.activeClass)) {
+						self.showSlide();
 					} else {
-						holder.addClass(settings.activeClass);
-						animated = true;
-						slide.slideDown(settings.animSpeed, function() {
-							animated = false;
-						});
+						self.hideSlide();
 					}
 				}
+			};
+			self.opener.bind('click', this.clickHandler);
+		},
+		initialState: function() {
+			if (this.holder.hasClass(this.options.activeClass)) {
+				this.slide.slideDown(0);
+			} else {
+				this.slide.slideUp(0);
 			}
+		},
+		showSlide: function() {
+			var self = this;
+			self.options.animated = true;
+			self.slide.slideDown(self.options.slideSpeed, function() {
+				self.holder.addClass(self.options.activeClass);
+				self.options.animated = false;
+			});
+		},
+		hideSlide: function() {
+			var self = this;
+			self.options.animated = true;
+			self.slide.slideUp(self.options.slideSpeed, function() {
+				self.holder.removeClass(self.options.activeClass);
+				self.options.animated = false;
+			});
+		},
+		destroy: function() {
+			this.opener.unbind('click', this.eventHandler);
+			this.holder.removeClass(this.options.activeClass).removeData('openClose');
+		}
+	};
+
+	// detect device type
+	var isTouchDevice = /MSIE 10.*Touch/.test(navigator.userAgent) || ('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch;
+
+	// jquery plugin
+	$.fn.openClose = function(opt){
+		return this.each(function(){
+			$(this).data('OpenClose', new OpenClose($.extend(opt,{holder:this})));
 		});
 	};
-})( jQuery );
+}(jQuery));
